@@ -1,0 +1,7 @@
+data/cifar-10-batches-py
+data/ct
+data/MNIST
+data/msd
+data/protein
+data/workloads
+nohup.out
