@@ -4,6 +4,9 @@ data/MNIST
 data/msd
 data/protein
 data/workloads
+data/cifar-10-batches-py
+data/cifar-10-batches-py.tar.gz
+data/adult.csv
 nohup.out
 __pycache__
 runlaf.log
