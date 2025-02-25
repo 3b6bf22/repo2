@@ -5,3 +5,7 @@ data/msd
 data/protein
 data/workloads
 nohup.out
+__pycache__
+runlaf.log
+runN.log
+runNmlp.log

@@ -10,13 +10,19 @@ for modelseed in "${modelseed_list[@]}"; do
         start_time=$(date +%s)
 
         CUDA_VISIBLE_DEVICES=7 python train.py --model RFLAF --data mnist --epochs 10 --h $h --N $N --M 1000 --modelseed $modelseed &
-        CUDA_VISIBLE_DEVICES=1 python train.py --model RFLAF --data cifar10 --epochs 20 --h $h --N $N --M 3000 --modelseed $modelseed &
-        CUDA_VISIBLE_DEVICES=2 python train.py --model RFLAF --data adult --epochs 15 --h $h --N $N --M 3000 --modelseed $modelseed &
-        CUDA_VISIBLE_DEVICES=3 python train.py --model RFLAF --data protein --epochs 30 --h $h --N $N --M 3000 --modelseed $modelseed &
+        # CUDA_VISIBLE_DEVICES=1 python train.py --model RFLAF --data cifar10 --epochs 20 --h $h --N $N --M 3000 --modelseed $modelseed &
+        # CUDA_VISIBLE_DEVICES=2 python train.py --model RFLAF --data adult --epochs 15 --h $h --N $N --M 3000 --modelseed $modelseed &
+        # CUDA_VISIBLE_DEVICES=3 python train.py --model RFLAF --data protein --epochs 30 --h $h --N $N --M 3000 --modelseed $modelseed &
         CUDA_VISIBLE_DEVICES=4 python train.py --model RFLAF --data ct --epochs 30 --h $h --N $N --M 3000 --modelseed $modelseed &
         CUDA_VISIBLE_DEVICES=5 python train.py --model RFLAF --data workloads --epochs 30 --h $h --N $N --M 3000 --modelseed $modelseed &
         CUDA_VISIBLE_DEVICES=6 python train.py --model RFLAF --data msd --epochs 10 --h $h --N $N --M 3000 --modelseed $modelseed
         
+        wait
+
+        CUDA_VISIBLE_DEVICES=4 python train.py --model RFLAF --data cifar10 --epochs 20 --h $h --N $N --M 3000 --modelseed $modelseed &
+        CUDA_VISIBLE_DEVICES=5 python train.py --model RFLAF --data adult --epochs 15 --h $h --N $N --M 3000 --modelseed $modelseed &
+        CUDA_VISIBLE_DEVICES=6 python train.py --model RFLAF --data protein --epochs 30 --h $h --N $N --M 3000 --modelseed $modelseed &
+
         wait
 
         end_time=$(date +%s)
@@ -28,9 +34,9 @@ done
 for modelseed in "${modelseed_list[@]}"; do
     start_time=$(date +%s)
 
-    CUDA_VISIBLE_DEVICES=0 python train.py --model RFLAF --data sin --epochs 45 --h 0.005 --N 401 --M 1000 --modelseed $modelseed &
-    CUDA_VISIBLE_DEVICES=1 python train.py --model RFLAF --data tru --epochs 45 --h 0.005 --N 401 --M 1000 --modelseed $modelseed &
-    CUDA_VISIBLE_DEVICES=2 python train.py --model RFLAF --data zoi --epochs 45 --h 0.005 --N 401 --M 1000 --modelseed $modelseed
+    CUDA_VISIBLE_DEVICES=7 python train.py --model RFLAF --data sin --epochs 45 --h 0.005 --N 401 --M 1000 --modelseed $modelseed &
+    CUDA_VISIBLE_DEVICES=6 python train.py --model RFLAF --data tru --epochs 45 --h 0.005 --N 401 --M 1000 --modelseed $modelseed &
+    CUDA_VISIBLE_DEVICES=5 python train.py --model RFLAF --data zoi --epochs 45 --h 0.005 --N 401 --M 1000 --modelseed $modelseed
     wait
 
     end_time=$(date +%s)
@@ -38,6 +44,6 @@ for modelseed in "${modelseed_list[@]}"; do
     echo "Modelseed $modelseed completed in $elapsed_time seconds." >> runlaf.log
 done
 
-CUDA_VISIBLE_DEVICES=0 python train.py --model RFLAF --data sin --epochs 25 --h 0.02 --N 401 --M 1000 --modelseed 402025 &
-CUDA_VISIBLE_DEVICES=1 python train.py --model RFLAF --data tru --epochs 12 --h 0.01 --N 401 --M 1000 --modelseed 402025 &
-CUDA_VISIBLE_DEVICES=2 python train.py --model RFLAF --data zoi --epochs 45 --h 0.02 --N 401 --M 1000 --modelseed 102025
+CUDA_VISIBLE_DEVICES=7 python train.py --model RFLAF --data sin --epochs 25 --h 0.02 --N 401 --M 1000 --modelseed 402025 &
+CUDA_VISIBLE_DEVICES=6 python train.py --model RFLAF --data tru --epochs 12 --h 0.01 --N 401 --M 1000 --modelseed 402025 &
+CUDA_VISIBLE_DEVICES=5 python train.py --model RFLAF --data zoi --epochs 45 --h 0.02 --N 401 --M 1000 --modelseed 102025
