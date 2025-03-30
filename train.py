@@ -8,7 +8,7 @@ from torch.optim.lr_scheduler import LinearLR, CosineAnnealingLR
 from torch.utils.data import DataLoader, TensorDataset, random_split
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
-from RFLAF_model import RFLAF, CustomRegularizer
+from RFLAF_model import RFLAF, CustomRegularizer, RFLAF_BSpline, RFLAF_Poly
 from BaseRF_model import RFMLP
 import os
 from tqdm import tqdm
@@ -122,7 +122,7 @@ def train():
         time2 = time.time()
         test_time.append(time2-time1)
         
-        if args.model == 'RFLAF':
+        if args.model in ['RFLAF', 'RFLAFBS', 'RFLAFPL']:
             os.makedirs('./coef', exist_ok=True)
             coef = model.a.cpu().detach().numpy()
             np.savetxt(f"./coef/{task_name}_coef_{moreargs}_{epoch+1}.txt", coef)
@@ -231,7 +231,24 @@ if __name__=='__main__':
         print(f'RBF params:\th={h}\tN={N}\tL={L}\tR={R}')
         
         model = RFLAF(input_dim, hidden_dim, output_dim, h, N, L, R, modelseed).to(device)
-        regularizer = CustomRegularizer(args.lambda1, args.lambda2, args.N, args.M)    
+        regularizer = CustomRegularizer(args.lambda1, args.lambda2, args.N, args.M)
+    elif args.model=='RFLAFBS':
+        # Setting parameters
+        print(f'Using model RFLAF_BSpline, modelseed={modelseed}')
+        N, L, R = args.N, args.L, args.R
+        h = (R-L)/(N-1)
+        print(f'BSpline params:\th={h}\tN={N}\tL={L}\tR={R}')
+        
+        model = RFLAF_BSpline(input_dim, hidden_dim, output_dim, N, L, R, modelseed).to(device)
+        regularizer = CustomRegularizer(args.lambda1, args.lambda2, args.N, args.M)
+    elif args.model=='RFLAFPL':
+        # Setting parameters
+        print(f'Using model RFLAF_Poly, modelseed={modelseed}')
+        N = args.N
+        print(f'Poly params:\tN={N}')
+        
+        model = RFLAF_Poly(input_dim, hidden_dim, output_dim, N, modelseed).to(device)
+        regularizer = CustomRegularizer(args.lambda1, args.lambda2, args.N, args.M)
     elif args.model=='RFMLP':
         print(f'Using model RFMLP, modelseed={modelseed}')
         model = RFMLP(input_dim, hidden_dim, output_dim, args.actfunc, args.modelseed).to(device)
@@ -243,6 +260,12 @@ if __name__=='__main__':
     if args.model=='RFLAF':
         actfunc = 'LAF'
         moreargs=f'_h={args.h}_N={args.N}_L={args.L}_R={args.R}_M={args.M}_lambda1={args.lambda1}_lambda2={args.lambda2}'
+    elif args.model=='RFLAFBS':
+        actfunc = 'BS'
+        moreargs=f'_N={args.N}_L={args.L}_R={args.R}_M={args.M}_lambda1={args.lambda1}_lambda2={args.lambda2}'
+    elif args.model=='RFLAFPL':
+        actfunc = 'PL'
+        moreargs=f'_N={args.N}_M={args.M}_lambda1={args.lambda1}_lambda2={args.lambda2}'
     elif args.model=='RFMLP':
         actfunc = args.actfunc
         moreargs=f'_M={args.M}'
