@@ -10,6 +10,7 @@ from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 from RFLAF_model import RFLAF, CustomRegularizer, RFLAF_BSpline, RFLAF_Poly
 from BaseRF_model import RFMLP
+from efficient_kan import KAN
 import os
 from tqdm import tqdm
 import time
@@ -73,10 +74,10 @@ def train():
         model.train()
         for images, labels in tqdm(train_loader, desc=f"Epoch {epoch+1}/{epochs} - Training", leave=False):
             iter+=1
-            images, labels = images.to(device), labels.to(device)
+            images, labels = images.view(-1, input_dim).to(device), labels.to(device)
             
             outputs = model(images)
-            if args.model=='RFLAF':
+            if args.model in ['RFLAF', 'RFLAFBS', 'RFLAFPL', 'LAN', 'LANBS', 'LANPL']:
                 reg_value = regularizer(model.a,model.v)
             else:
                 reg_value = torch.tensor(0.0, requires_grad=False)
@@ -107,7 +108,7 @@ def train():
         model.eval()
         with torch.no_grad():
             for images, labels in tqdm(test_loader, desc=f"Epoch {epoch+1}/{epochs} - Validation", leave=False):
-                images, labels = images.to(device), labels.to(device)
+                images, labels = images.view(-1, input_dim).to(device), labels.to(device)
                 outputs = model(images)
                 loss = criterion(outputs, labels)
                 
@@ -122,7 +123,7 @@ def train():
         time2 = time.time()
         test_time.append(time2-time1)
         
-        if args.model in ['RFLAF', 'RFLAFBS', 'RFLAFPL']:
+        if args.model in ['RFLAF', 'LAN', 'RFLAFBS', 'RFLAFPL', 'LANBS', 'LANPL']:
             os.makedirs('./coef', exist_ok=True)
             coef = model.a.cpu().detach().numpy()
             np.savetxt(f"./coef/{task_name}_coef_{moreargs}_{epoch+1}.txt", coef)
@@ -229,7 +230,6 @@ if __name__=='__main__':
         print(f'Using model RFLAF, modelseed={modelseed}')
         h, N, L, R = args.h, args.N, args.L, args.R
         print(f'RBF params:\th={h}\tN={N}\tL={L}\tR={R}')
-        
         model = RFLAF(input_dim, hidden_dim, output_dim, h, N, L, R, modelseed).to(device)
         regularizer = CustomRegularizer(args.lambda1, args.lambda2, args.N, args.M)
     elif args.model=='RFLAFBS':
@@ -238,15 +238,12 @@ if __name__=='__main__':
         N, L, R = args.N, args.L, args.R
         h = (R-L)/(N-1)
         print(f'BSpline params:\th={h}\tN={N}\tL={L}\tR={R}')
-        
         model = RFLAF_BSpline(input_dim, hidden_dim, output_dim, N, L, R, modelseed).to(device)
         regularizer = CustomRegularizer(args.lambda1, args.lambda2, args.N, args.M)
     elif args.model=='RFLAFPL':
-        # Setting parameters
         print(f'Using model RFLAF_Poly, modelseed={modelseed}')
         N = args.N
         print(f'Poly params:\tN={N}')
-        
         model = RFLAF_Poly(input_dim, hidden_dim, output_dim, N, modelseed).to(device)
         regularizer = CustomRegularizer(args.lambda1, args.lambda2, args.N, args.M)
     elif args.model=='RFMLP':
@@ -255,6 +252,30 @@ if __name__=='__main__':
     elif args.model=='MLP':
         print(f'Using model MLP, modelseed={modelseed}')
         model = RFMLP(input_dim, hidden_dim, output_dim, args.actfunc, args.modelseed, frozen=False).to(device)
+    elif args.model=='LAN':
+        print(f'Using model LAN, modelseed={modelseed}')
+        h, N, L, R = args.h, args.N, args.L, args.R
+        print(f'RBF params:\th={h}\tN={N}\tL={L}\tR={R}')
+        model = RFLAF(input_dim, hidden_dim, output_dim, h, N, L, R, modelseed, frozen=False).to(device)
+        regularizer = CustomRegularizer(args.lambda1, args.lambda2, args.N, args.M)
+    elif args.model=='LANBS':
+        print(f'Using model RFLAF_BSpline, modelseed={modelseed}')
+        N, L, R = args.N, args.L, args.R
+        h = (R-L)/(N-1)
+        print(f'BSpline params:\th={h}\tN={N}\tL={L}\tR={R}')
+        model = RFLAF_BSpline(input_dim, hidden_dim, output_dim, N, L, R, modelseed, frozen=False).to(device)
+        regularizer = CustomRegularizer(args.lambda1, args.lambda2, args.N, args.M)
+    elif args.model=='LANPL':
+        print(f'Using model RFLAF_Poly, modelseed={modelseed}')
+        N = args.N
+        print(f'Poly params:\tN={N}')
+        model = RFLAF_Poly(input_dim, hidden_dim, output_dim, N, modelseed, frozen=False).to(device)
+        regularizer = CustomRegularizer(args.lambda1, args.lambda2, args.N, args.M)
+    elif args.model=='KAN':
+        print(f'Using model KAN, modelseed={modelseed}')
+        N, L, R = args.N, args.L, args.R
+        print(f'KAN params:\tN={args.N}\tL={args.L}\tR={args.R}')
+        model = KAN([input_dim, max(hidden_dim//args.N, 10), output_dim], grid_size=args.N, spline_order=3, grid_range=[args.L, args.R]).to(device)
     
     # Setting logger file name
     if args.model=='RFLAF':
@@ -272,16 +293,31 @@ if __name__=='__main__':
     elif args.model=='MLP':
         actfunc = 'N'+args.actfunc
         moreargs=f'_M={args.M}'
+    elif args.model=='LAN':
+        actfunc = 'LAN'
+        moreargs=f'_h={args.h}_N={args.N}_L={args.L}_R={args.R}_M={args.M}_lambda1={args.lambda1}_lambda2={args.lambda2}'
+    elif args.model=='LANBS':
+        actfunc = 'LANBS'
+        moreargs=f'_N={args.N}_L={args.L}_R={args.R}_M={args.M}_lambda1={args.lambda1}_lambda2={args.lambda2}'
+    elif args.model=='LANPL':
+        actfunc = 'LANPL'
+        moreargs=f'_N={args.N}_M={args.M}_lambda1={args.lambda1}_lambda2={args.lambda2}'
+    elif args.model=='KAN':
+        actfunc = 'KAN'
+        moreargs=f'_N={args.N}_L={args.L}_R={args.R}_M={args.M}'
         
     moreargs=f'seed={modelseed}_epoch={args.epochs}{moreargs}'
     task_name = args.data + '_' + actfunc # taskname = 'dataset_modelname'
     
     # weight_decay=0.001 if args.model=='RFMLP' else 0.0
-    weight_decay=0.0
+    if args.model in ['MLP', 'LAN', 'KAN', 'LANBS', 'LANPL']:
+        weight_decay = 0.0001
+    else:
+        weight_decay = 0.0
     optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=weight_decay)
     warmup_iter = 8
     warmup_scheduler = LinearLR(optimizer, start_factor=0.1, end_factor=1.0, total_iters=warmup_iter)
-    epochs=args.epochs
+    epochs = args.epochs
     
     print(f'Start training model {args.model} on data {args.data}...')
     start_time = time.time()

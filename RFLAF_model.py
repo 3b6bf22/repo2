@@ -14,7 +14,7 @@ class RBFLayer(nn.Module):
         return torch.exp(result)
 
 class RFLAF(nn.Module):
-    def __init__(self, input_dim, hidden_dim, output_dim=1, h=0.02, N=401, L=-2, R=2, seed=0):
+    def __init__(self, input_dim, hidden_dim, output_dim=1, h=0.02, N=401, L=-2, R=2, seed=0, frozen=True):
         super(RFLAF, self).__init__()
         torch.manual_seed(seed)
         torch.cuda.manual_seed(seed)
@@ -24,8 +24,12 @@ class RFLAF(nn.Module):
         clist=np.linspace(L, R, N)
         paralist = list(zip(clist, hlist))
         
-        self.W = nn.Parameter(torch.randn(input_dim, hidden_dim)) 
-        self.W.requires_grad = False
+        if frozen:
+            self.W = nn.Parameter(torch.randn(input_dim, hidden_dim), requires_grad=False)
+        else:
+            self.W = nn.Parameter(torch.randn(input_dim, hidden_dim))
+        # self.W = nn.Parameter(torch.randn(input_dim, hidden_dim)) 
+        # self.W.requires_grad = False
         if output_dim==1:
             self.v = nn.Parameter(torch.randn(hidden_dim)/torch.sqrt(torch.tensor(hidden_dim*1.0)))
         else:
@@ -93,7 +97,7 @@ class BSplineLayer(nn.Module):
         return 2 * result / (3*self.h**2)
     
 class RFLAF_BSpline(nn.Module):
-    def __init__(self, input_dim, hidden_dim, output_dim=1, N=401, L=-2, R=2, seed=0):
+    def __init__(self, input_dim, hidden_dim, output_dim=1, N=401, L=-2, R=2, seed=0, frozen=True):
         super(RFLAF_BSpline, self).__init__()
         torch.manual_seed(seed)
         torch.cuda.manual_seed(seed)
@@ -103,8 +107,12 @@ class RFLAF_BSpline(nn.Module):
         clist=np.linspace(L, R, N)
         paralist = list(zip(clist, hlist))
         
-        self.W = nn.Parameter(torch.randn(input_dim, hidden_dim)) 
-        self.W.requires_grad = False
+        if frozen:
+            self.W = nn.Parameter(torch.randn(input_dim, hidden_dim), requires_grad=False)
+        else:
+            self.W = nn.Parameter(torch.randn(input_dim, hidden_dim))
+        # self.W = nn.Parameter(torch.randn(input_dim, hidden_dim)) 
+        # self.W.requires_grad = False
         if output_dim==1:
             self.v = nn.Parameter(torch.randn(hidden_dim)/torch.sqrt(torch.tensor(hidden_dim*1.0)))
         else:
@@ -132,14 +140,18 @@ class PolyLayer(nn.Module):
         return x**self.n_order
 
 class RFLAF_Poly(nn.Module):
-    def __init__(self, input_dim, hidden_dim, output_dim=1, N=401, seed=0):
+    def __init__(self, input_dim, hidden_dim, output_dim=1, N=401, seed=0, frozen=True):
         super(RFLAF_Poly, self).__init__()
         torch.manual_seed(seed)
         torch.cuda.manual_seed(seed)
         torch.cuda.manual_seed_all(seed)
         
-        self.W = nn.Parameter(torch.randn(input_dim, hidden_dim)) 
-        self.W.requires_grad = False
+        if frozen:
+            self.W = nn.Parameter(torch.randn(input_dim, hidden_dim), requires_grad=False)
+        else:
+            self.W = nn.Parameter(torch.randn(input_dim, hidden_dim))
+        # self.W = nn.Parameter(torch.randn(input_dim, hidden_dim)) 
+        # self.W.requires_grad = False
         if output_dim==1:
             self.v = nn.Parameter(torch.randn(hidden_dim)/torch.sqrt(torch.tensor(hidden_dim*1.0)))
         else:

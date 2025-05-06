@@ -14,4 +14,14 @@ runN.log
 runNmlp.log
 runBS.log
 runPL.log
+runMLP.log
+runKAN.log
+runLAN.log
+runLANBS.log
+runLANPL.log
 Expe.ipynb
+test.ipynb
+model
+pltf.py
+runall.sh
+coef
