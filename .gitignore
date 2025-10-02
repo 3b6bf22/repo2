@@ -26,3 +26,5 @@ model
 pltf.py
 runall.sh
 coef
+Experiments.ipynb
+.gitignore

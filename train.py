@@ -85,7 +85,7 @@ def train():
             
             optimizer.zero_grad()
             loss.backward()
-            optimizer.step()
+            # optimizer.step()
             
             if iter <= warmup_iter:
                 warmup_scheduler.step()
