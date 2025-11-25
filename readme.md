@@ -1,3 +1,12 @@
+
+### Figure 1
+![Figure 1](new_figures/workloads_many_M.png)
+
+### Figure 2
+![Figure 1](new_figures/protein_many_M.png)
+
+------------------------------
+
 Generating synthetic data:
 ```
 python gen_data.py --task_name sin
