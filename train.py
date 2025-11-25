@@ -51,7 +51,7 @@ def load_data(data, batch_size):
     else:
         # data = 'adult', 'protein', 'ct', 'workloads'
         X, y = get_uci_loaders(data)
-        if data=='adult':
+        if data in ['adult', 'covtype']:
             dataset = TensorDataset(torch.tensor(X, dtype=torch.float32), torch.tensor(y, dtype=torch.long))
         else:
             dataset = TensorDataset(torch.tensor(X, dtype=torch.float32), torch.tensor(y, dtype=torch.float32))
@@ -216,6 +216,12 @@ if __name__=='__main__':
         hidden_dim = args.M
         output_dim = 1
         criterion = nn.MSELoss()
+    elif args.data=='covtype':
+        input_dim = 54
+        hidden_dim = args.M
+        output_dim = 7
+        criterion = nn.CrossEntropyLoss()
+        classification = True
     else:
         pass
     
